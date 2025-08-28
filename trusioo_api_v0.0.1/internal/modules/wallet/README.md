@@ -25,14 +25,24 @@
   - 查询用户所有银行账户
 
 ### 4. 提现功能
-- 📝 提现申请
-- 📝 提现审核（管理员功能）
-- 📝 提现处理（管理员功能）
-- 📝 提现记录查询
+- ✅ 提现费用计算
+- ✅ 提现申请接口
+- ✅ 提现记录查询
+- ✅ 提现申请取消
+- ✅ 提现审核（管理员功能）
+- ✅ 提现处理（管理员功能）
 
 ### 5. 交易记录
-- 📝 交易记录查询
-- 📝 交易统计分析
+- ✅ 交易记录查询接口
+- 📝 交易详情查询（待具体实现）
+
+### 6. 管理员功能
+- ✅ 汇率管理接口
+- ✅ 钱包余额调整
+- ✅ 用户钱包查询
+- ✅ 钱包统计信息
+- 📝 钱包冻结/解冻（待具体实现）
+- 📝 交易/提现统计（待具体实现）
 
 ## API 端点
 
@@ -49,11 +59,29 @@
 - `POST /api/v1/wallet/bank-accounts` - 添加银行账户
 - `PUT /api/v1/wallet/bank-accounts/:id` - 更新银行账户
 - `DELETE /api/v1/wallet/bank-accounts/:id` - 删除银行账户
+- `POST /api/v1/wallet/withdrawal/calculate` - 计算提现费用
+- `POST /api/v1/wallet/withdrawals` - 创建提现申请
+- `GET /api/v1/wallet/withdrawals` - 获取提现记录
+- `GET /api/v1/wallet/withdrawals/:id` - 获取提现详情
+- `POST /api/v1/wallet/withdrawals/:id/cancel` - 取消提现申请
+- `GET /api/v1/wallet/transactions` - 获取交易记录
+- `GET /api/v1/wallet/transactions/:id` - 获取交易详情
 
 ### 管理员接口（需要管理员认证）
-- 📝 提现审核和管理相关接口
-- 📝 汇率管理接口
-- 📝 钱包统计和监控接口
+- `GET /api/v1/wallet/admin/withdrawals` - 获取待处理提现申请
+- `GET /api/v1/wallet/admin/withdrawals/:id` - 获取提现详情（管理员）
+- `POST /api/v1/wallet/admin/withdrawals/:id/review` - 审核提现申请
+- `POST /api/v1/wallet/admin/withdrawals/:id/process` - 处理提现申请
+- `POST /api/v1/wallet/admin/exchange-rates` - 创建汇率
+- `PUT /api/v1/wallet/admin/exchange-rates/:id` - 更新汇率
+- `GET /api/v1/wallet/admin/exchange-rates` - 获取汇率列表
+- `POST /api/v1/wallet/admin/wallets/adjust` - 调整钱包余额
+- `GET /api/v1/wallet/admin/wallets/:user_id` - 获取用户钱包
+- `POST /api/v1/wallet/admin/wallets/:user_id/freeze` - 冻结钱包
+- `POST /api/v1/wallet/admin/wallets/:user_id/unfreeze` - 解冻钱包
+- `GET /api/v1/wallet/admin/statistics/wallets` - 获取钱包统计
+- `GET /api/v1/wallet/admin/statistics/transactions` - 获取交易统计
+- `GET /api/v1/wallet/admin/statistics/withdrawals` - 获取提现统计
 
 ## 数据库表结构
 
@@ -76,7 +104,8 @@ internal/modules/wallet/
 ├── dto.go             # API请求/响应结构体
 ├── repository.go      # 数据访问层
 ├── service.go         # 业务逻辑层
-├── handler.go         # HTTP处理器
+├── handler.go         # 用户HTTP处理器
+├── admin_handler.go   # 管理员HTTP处理器
 └── routes.go          # 路由定义
 ```
 

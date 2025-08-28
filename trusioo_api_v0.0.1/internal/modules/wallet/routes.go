@@ -75,23 +75,21 @@ func (r *Routes) registerUserRoutes(group *gin.RouterGroup) {
 		user.DELETE("/bank-accounts/:account_id", r.handler.DeleteBankAccount)
 
 		// === 提现相关 ===
-		// 注意：这些接口暂时注释，等后续实现
 
-		// // 提现费用计算
-		// user.POST("/withdrawal/calculate", r.handler.CalculateWithdrawal)
-		//
-		// // 提现申请
-		// user.POST("/withdrawals", r.handler.CreateWithdrawal)
-		// user.GET("/withdrawals", r.handler.GetUserWithdrawals)
-		// user.GET("/withdrawals/:withdrawal_id", r.handler.GetWithdrawal)
-		// user.POST("/withdrawals/:withdrawal_id/cancel", r.handler.CancelWithdrawal)
+		// 提现费用计算
+		user.POST("/withdrawal/calculate", r.handler.CalculateWithdrawal)
+
+		// 提现申请
+		user.POST("/withdrawals", r.handler.CreateWithdrawal)
+		user.GET("/withdrawals", r.handler.GetUserWithdrawals)
+		user.GET("/withdrawals/:withdrawal_id", r.handler.GetWithdrawal)
+		user.POST("/withdrawals/:withdrawal_id/cancel", r.handler.CancelWithdrawal)
 
 		// === 交易记录 ===
-		// 注意：这些接口暂时注释，等后续实现
 
-		// // 交易记录查询
-		// user.GET("/transactions", r.handler.GetUserTransactions)
-		// user.GET("/transactions/:transaction_id", r.handler.GetTransaction)
+		// 交易记录查询
+		user.GET("/transactions", r.handler.GetUserTransactions)
+		user.GET("/transactions/:transaction_id", r.handler.GetTransaction)
 	}
 }
 
@@ -103,38 +101,34 @@ func (r *Routes) registerAdminRoutes(group *gin.RouterGroup) {
 	admin.Use(r.authMiddle.RequireUserType("admin"))
 	{
 		// === 提现管理 ===
-		// 注意：这些接口暂时注释，等后续实现
 
-		// // 提现申请管理
-		// admin.GET("/withdrawals", r.handler.GetPendingWithdrawals)
-		// admin.GET("/withdrawals/:withdrawal_id", r.handler.GetWithdrawalDetail)
-		// admin.POST("/withdrawals/:withdrawal_id/review", r.handler.ReviewWithdrawal)
-		// admin.POST("/withdrawals/:withdrawal_id/process", r.handler.ProcessWithdrawal)
+		// 提现申请管理
+		admin.GET("/withdrawals", r.handler.GetPendingWithdrawals)
+		admin.GET("/withdrawals/:withdrawal_id", r.handler.GetWithdrawalDetail)
+		admin.POST("/withdrawals/:withdrawal_id/review", r.handler.ReviewWithdrawal)
+		admin.POST("/withdrawals/:withdrawal_id/process", r.handler.ProcessWithdrawal)
 
 		// === 汇率管理 ===
-		// 注意：这些接口暂时注释，等后续实现
 
-		// // 汇率设置
-		// admin.POST("/exchange-rates", r.handler.CreateExchangeRate)
-		// admin.PUT("/exchange-rates/:rate_id", r.handler.UpdateExchangeRate)
-		// admin.GET("/exchange-rates", r.handler.GetExchangeRates)
+		// 汇率设置
+		admin.POST("/exchange-rates", r.handler.CreateExchangeRate)
+		admin.PUT("/exchange-rates/:rate_id", r.handler.UpdateExchangeRate)
+		admin.GET("/exchange-rates", r.handler.GetExchangeRates)
 
 		// === 钱包管理 ===
-		// 注意：这些接口暂时注释，等后续实现
 
-		// // 钱包调整
-		// admin.POST("/wallets/adjust", r.handler.AdjustWallet)
-		// admin.GET("/wallets/:user_id", r.handler.GetUserWallet)
-		// admin.POST("/wallets/:user_id/freeze", r.handler.FreezeWallet)
-		// admin.POST("/wallets/:user_id/unfreeze", r.handler.UnfreezeWallet)
+		// 钱包调整
+		admin.POST("/wallets/adjust", r.handler.AdjustWallet)
+		admin.GET("/wallets/:user_id", r.handler.GetUserWallet)
+		admin.POST("/wallets/:user_id/freeze", r.handler.FreezeWallet)
+		admin.POST("/wallets/:user_id/unfreeze", r.handler.UnfreezeWallet)
 
 		// === 统计报告 ===
-		// 注意：这些接口暂时注释，等后续实现
 
-		// // 统计信息
-		// admin.GET("/statistics/wallets", r.handler.GetWalletStatistics)
-		// admin.GET("/statistics/transactions", r.handler.GetTransactionStatistics)
-		// admin.GET("/statistics/withdrawals", r.handler.GetWithdrawalStatistics)
+		// 统计信息
+		admin.GET("/statistics/wallets", r.handler.GetWalletStatistics)
+		admin.GET("/statistics/transactions", r.handler.GetTransactionStatistics)
+		admin.GET("/statistics/withdrawals", r.handler.GetWithdrawalStatistics)
 	}
 }
 

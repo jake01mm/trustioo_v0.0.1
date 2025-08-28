@@ -422,6 +422,185 @@ func (h *Handler) DeleteBankAccount(c *gin.Context) {
 
 // === 辅助方法 ===
 
+// CalculateWithdrawal 计算提现费用
+func (h *Handler) CalculateWithdrawal(c *gin.Context) {
+	userID := h.getUserID(c)
+	if userID == "" {
+		h.respondError(c, http.StatusUnauthorized, "Unauthorized", "User not authenticated")
+		return
+	}
+
+	var req CalculateWithdrawalRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.WithError(err).Warn("Invalid calculate withdrawal request")
+		h.respondError(c, http.StatusBadRequest, "Invalid request", err.Error())
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	calculation, err := h.service.CalculateWithdrawal(ctx, userID, &req)
+	if err != nil {
+		h.logger.WithError(err).WithField("user_id", userID).Error("Failed to calculate withdrawal")
+		h.respondError(c, http.StatusInternalServerError, "Internal server error", "Failed to calculate withdrawal")
+		return
+	}
+
+	c.JSON(http.StatusOK, calculation)
+}
+
+// CreateWithdrawal 创建提现申请
+func (h *Handler) CreateWithdrawal(c *gin.Context) {
+	userID := h.getUserID(c)
+	if userID == "" {
+		h.respondError(c, http.StatusUnauthorized, "Unauthorized", "User not authenticated")
+		return
+	}
+
+	var req CreateWithdrawalRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.WithError(err).Warn("Invalid create withdrawal request")
+		h.respondError(c, http.StatusBadRequest, "Invalid request", err.Error())
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	withdrawal, err := h.service.CreateWithdrawalRequest(ctx, userID, &req)
+	if err != nil {
+		h.logger.WithError(err).WithField("user_id", userID).Error("Failed to create withdrawal")
+		h.respondError(c, http.StatusInternalServerError, "Internal server error", "Failed to create withdrawal")
+		return
+	}
+
+	c.JSON(http.StatusCreated, withdrawal)
+}
+
+// GetUserWithdrawals 获取用户提现记录
+func (h *Handler) GetUserWithdrawals(c *gin.Context) {
+	userID := h.getUserID(c)
+	if userID == "" {
+		h.respondError(c, http.StatusUnauthorized, "Unauthorized", "User not authenticated")
+		return
+	}
+
+	var req GetWithdrawalsRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		h.logger.WithError(err).Warn("Invalid get withdrawals request")
+		h.respondError(c, http.StatusBadRequest, "Invalid request", err.Error())
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	withdrawals, err := h.service.GetUserWithdrawals(ctx, userID, &req)
+	if err != nil {
+		h.logger.WithError(err).WithField("user_id", userID).Error("Failed to get withdrawals")
+		h.respondError(c, http.StatusInternalServerError, "Internal server error", "Failed to retrieve withdrawals")
+		return
+	}
+
+	c.JSON(http.StatusOK, withdrawals)
+}
+
+// GetWithdrawal 获取提现详情
+func (h *Handler) GetWithdrawal(c *gin.Context) {
+	userID := h.getUserID(c)
+	if userID == "" {
+		h.respondError(c, http.StatusUnauthorized, "Unauthorized", "User not authenticated")
+		return
+	}
+
+	withdrawalID := c.Param("withdrawal_id")
+	if withdrawalID == "" {
+		h.respondError(c, http.StatusBadRequest, "Invalid request", "Withdrawal ID is required")
+		return
+	}
+
+	// 暂时返回未实现错误
+	h.respondError(c, http.StatusNotImplemented, "Not implemented", "This feature is not yet implemented")
+}
+
+// CancelWithdrawal 取消提现申请
+func (h *Handler) CancelWithdrawal(c *gin.Context) {
+	userID := h.getUserID(c)
+	if userID == "" {
+		h.respondError(c, http.StatusUnauthorized, "Unauthorized", "User not authenticated")
+		return
+	}
+
+	withdrawalID := c.Param("withdrawal_id")
+	if withdrawalID == "" {
+		h.respondError(c, http.StatusBadRequest, "Invalid request", "Withdrawal ID is required")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	if err := h.service.CancelWithdrawal(ctx, userID, withdrawalID); err != nil {
+		h.logger.WithError(err).WithFields(logrus.Fields{
+			"user_id":      userID,
+			"withdrawal_id": withdrawalID,
+		}).Error("Failed to cancel withdrawal")
+		h.respondError(c, http.StatusInternalServerError, "Internal server error", "Failed to cancel withdrawal")
+		return
+	}
+
+	h.respondSuccess(c, "Withdrawal cancelled successfully", nil)
+}
+
+// GetUserTransactions 获取用户交易记录
+func (h *Handler) GetUserTransactions(c *gin.Context) {
+	userID := h.getUserID(c)
+	if userID == "" {
+		h.respondError(c, http.StatusUnauthorized, "Unauthorized", "User not authenticated")
+		return
+	}
+
+	var req GetTransactionsRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		h.logger.WithError(err).Warn("Invalid get transactions request")
+		h.respondError(c, http.StatusBadRequest, "Invalid request", err.Error())
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	transactions, err := h.service.GetUserTransactions(ctx, userID, &req)
+	if err != nil {
+		h.logger.WithError(err).WithField("user_id", userID).Error("Failed to get transactions")
+		h.respondError(c, http.StatusInternalServerError, "Internal server error", "Failed to retrieve transactions")
+		return
+	}
+
+	c.JSON(http.StatusOK, transactions)
+}
+
+// GetTransaction 获取交易详情
+func (h *Handler) GetTransaction(c *gin.Context) {
+	userID := h.getUserID(c)
+	if userID == "" {
+		h.respondError(c, http.StatusUnauthorized, "Unauthorized", "User not authenticated")
+		return
+	}
+
+	transactionID := c.Param("transaction_id")
+	if transactionID == "" {
+		h.respondError(c, http.StatusBadRequest, "Invalid request", "Transaction ID is required")
+		return
+	}
+
+	// 暂时返回未实现错误
+	h.respondError(c, http.StatusNotImplemented, "Not implemented", "This feature is not yet implemented")
+}
+
+// === 辅助方法 ===
+
 // getUserID 从上下文获取用户ID
 func (h *Handler) getUserID(c *gin.Context) string {
 	userID, exists := c.Get("user_id")
