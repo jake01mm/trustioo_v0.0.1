@@ -20,6 +20,7 @@ import (
 	"trusioo_api_v0.0.1/internal/modules/auth/user"
 	"trusioo_api_v0.0.1/internal/modules/health"
 	"trusioo_api_v0.0.1/internal/modules/user_management"
+	"trusioo_api_v0.0.1/internal/modules/wallet"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -150,6 +151,9 @@ func setupServices(routerEngine *router.Router, db *database.Database, redisClie
 
 	// 设置用户管理模块
 	setupUserManagementModule(routerEngine, db, jwtManager, authMiddle, passwordEncryptor, logger)
+
+	// 设置钱包模块
+	setupWalletModule(routerEngine, db, jwtManager, authMiddle, passwordEncryptor, logger)
 }
 
 // setupHealthModule 设置健康检查模块
@@ -219,4 +223,21 @@ func setupUserManagementModule(routerEngine *router.Router, db *database.Databas
 	// 注册路由
 	userMgmtRoutes.RegisterRoutes(v1Group)
 	logger.Info("User management module initialized")
+}
+
+// setupWalletModule 设置钱包模块
+func setupWalletModule(routerEngine *router.Router, db *database.Database, jwtManager *auth.JWTManager, authMiddle *auth.AuthMiddleware, passwordEncryptor *cryptoutil.PasswordEncryptor, logger *logrus.Logger) {
+	// 获取API v1路由分组
+	v1Group := routerEngine.GetV1Group()
+
+	// 初始化钱包模块组件
+	walletRepo := wallet.NewRepository(db, logger)
+	walletService := wallet.NewService(walletRepo, passwordEncryptor, logger)
+	walletHandler := wallet.NewHandler(walletService, logger)
+	walletRoutes := wallet.NewRoutes(walletHandler, authMiddle)
+
+	// 注册钱包路由
+	walletRoutes.RegisterRoutes(v1Group)
+
+	logger.Info("Wallet module initialized")
 }
