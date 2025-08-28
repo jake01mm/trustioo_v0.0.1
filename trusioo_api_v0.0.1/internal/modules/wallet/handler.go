@@ -543,7 +543,7 @@ func (h *Handler) CancelWithdrawal(c *gin.Context) {
 
 	if err := h.service.CancelWithdrawal(ctx, userID, withdrawalID); err != nil {
 		h.logger.WithError(err).WithFields(logrus.Fields{
-			"user_id":      userID,
+			"user_id":       userID,
 			"withdrawal_id": withdrawalID,
 		}).Error("Failed to cancel withdrawal")
 		h.respondError(c, http.StatusInternalServerError, "Internal server error", "Failed to cancel withdrawal")

@@ -209,7 +209,7 @@ func setupUserAuth(authGroup *gin.RouterGroup, db *database.Database, jwtManager
 }
 
 // setupUserManagementModule 设置用户管理模块
-func setupUserManagementModule(routerEngine *router.Router, db *database.Database, jwtManager *auth.JWTManager, authMiddle *auth.AuthMiddleware, passwordEncryptor *cryptoutil.PasswordEncryptor, logger *logrus.Logger) {
+func setupUserManagementModule(routerEngine *router.Router, db *database.Database, _ *auth.JWTManager, authMiddle *auth.AuthMiddleware, passwordEncryptor *cryptoutil.PasswordEncryptor, logger *logrus.Logger) {
 	// 获取API v1路由分组
 	v1Group := routerEngine.GetV1Group()
 
@@ -226,7 +226,7 @@ func setupUserManagementModule(routerEngine *router.Router, db *database.Databas
 }
 
 // setupWalletModule 设置钱包模块
-func setupWalletModule(routerEngine *router.Router, db *database.Database, jwtManager *auth.JWTManager, authMiddle *auth.AuthMiddleware, passwordEncryptor *cryptoutil.PasswordEncryptor, logger *logrus.Logger) {
+func setupWalletModule(routerEngine *router.Router, db *database.Database, _ *auth.JWTManager, authMiddle *auth.AuthMiddleware, passwordEncryptor *cryptoutil.PasswordEncryptor, logger *logrus.Logger) {
 	// 获取API v1路由分组
 	v1Group := routerEngine.GetV1Group()
 

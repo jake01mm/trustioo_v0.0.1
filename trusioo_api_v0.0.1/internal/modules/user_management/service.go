@@ -241,11 +241,12 @@ func (s *Service) UpdateUserStatus(ctx context.Context, userID, adminID, adminEm
 
 	// 记录管理操作日志
 	action := UserManagementAction("update_status")
-	if status == user.UserStatusSuspended {
+	switch status {
+	case user.UserStatusSuspended:
 		action = ActionSuspend
-	} else if status == user.UserStatusActive {
+	case user.UserStatusActive:
 		action = ActionActivate
-	} else if status == user.UserStatusInactive {
+	case user.UserStatusInactive:
 		action = ActionDeactivate
 	}
 
