@@ -328,3 +328,118 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 		"message": "Password changed successfully",
 	})
 }
+
+// ForgotPassword 忘记密码，发送密码重置验证码
+func (h *Handler) ForgotPassword(c *gin.Context) {
+	var req ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.WithError(err).Warn("Invalid forgot password request")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// 获取客户端IP地址
+	ipAddress := c.ClientIP()
+
+	// 发送密码重置验证码
+	verificationCode, err := h.service.ForgotPassword(ctx, req.Email, ipAddress)
+	if err != nil {
+		h.logger.WithFields(logrus.Fields{
+			"email": req.Email,
+			"error": err.Error(),
+		}).Warn("Failed to send password reset verification code")
+
+		statusCode := http.StatusBadRequest
+		message := ""
+
+		// 根据错误类型返回不同的响应
+		if err == auth.ErrAdminNotFound {
+			message = "Please register first, email not found"
+		} else if err == auth.ErrTooManyAttempts {
+			statusCode = http.StatusTooManyRequests
+			message = "Too many attempts, please try again later"
+		} else {
+			message = "Failed to send verification code"
+		}
+
+		c.JSON(statusCode, gin.H{
+			"error":   "Request failed",
+			"message": message,
+		})
+		return
+	}
+
+	h.logger.WithFields(logrus.Fields{
+		"email": req.Email,
+	}).Info("Password reset verification code sent")
+
+	c.JSON(http.StatusOK, ForgotPasswordResponse{
+		Message:          "Password reset code sent to your email",
+		Email:            req.Email,
+		VerificationCode: verificationCode, // 仅用于测试
+		ExpiresIn:        900,              // 15分钟
+	})
+}
+
+// ResetPassword 重置密码
+func (h *Handler) ResetPassword(c *gin.Context) {
+	var req ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.WithError(err).Warn("Invalid reset password request")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// 获取客户端IP地址
+	ipAddress := c.ClientIP()
+
+	// 重置密码
+	err := h.service.ResetPassword(ctx, req.Email, req.VerificationCode, req.NewPassword, ipAddress)
+	if err != nil {
+		h.logger.WithFields(logrus.Fields{
+			"email": req.Email,
+			"error": err.Error(),
+		}).Warn("Failed to reset password")
+
+		statusCode := http.StatusBadRequest
+		message := ""
+
+		// 根据错误类型返回不同的响应
+		if err == auth.ErrAdminNotFound {
+			message = "Admin not found"
+		} else if err == auth.ErrInvalidVerificationCode {
+			message = "Invalid or expired verification code"
+		} else if err == auth.ErrTooManyAttempts {
+			statusCode = http.StatusTooManyRequests
+			message = "Too many attempts, please try again later"
+		} else {
+			message = "Failed to reset password"
+		}
+
+		c.JSON(statusCode, gin.H{
+			"error":   "Reset failed",
+			"message": message,
+		})
+		return
+	}
+
+	h.logger.WithFields(logrus.Fields{
+		"email": req.Email,
+	}).Info("Password reset successfully")
+
+	c.JSON(http.StatusOK, ResetPasswordResponse{
+		Message: "Password reset successfully",
+	})
+}

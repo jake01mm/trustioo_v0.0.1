@@ -497,11 +497,11 @@ func (s *Service) ResetPassword(ctx context.Context, email, code, newPassword, i
 
 	// 记录密码重置操作到password_resets表
 	if err := s.repo.CreatePasswordReset(ctx, &PasswordReset{
-		Email:    email,
-		UserType: "user",
-		Token:    verification.ID, // 使用验证ID作为token
-		Used:     true,
-		UsedAt:   &verification.VerifiedAt,
+		Email:     email,
+		UserType:  "user",
+		Token:     verification.ID, // 使用验证ID作为token
+		Used:      true,
+		UsedAt:    verification.VerifiedAt,
 		ExpiresAt: verification.ExpiresAt,
 	}); err != nil {
 		s.logger.WithError(err).Warn("Failed to record password reset")

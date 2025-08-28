@@ -372,7 +372,7 @@ func (s *Service) ResetPassword(ctx context.Context, email, code, newPassword, i
 		UserType:  "admin",
 		Token:     verification.ID, // 使用验证ID作为token
 		Used:      true,
-		UsedAt:    &verification.VerifiedAt,
+		UsedAt:    verification.VerifiedAt,
 		ExpiresAt: verification.ExpiresAt,
 	}); err != nil {
 		s.logger.WithError(err).Warn("Failed to record password reset")

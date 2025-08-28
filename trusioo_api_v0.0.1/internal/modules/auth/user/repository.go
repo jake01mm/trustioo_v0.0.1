@@ -449,3 +449,23 @@ func (r *Repository) GetUserLoginLogs(ctx context.Context, userID string, limit,
 
 	return logs, nil
 }
+
+// CreatePasswordReset 创建密码重置记录
+func (r *Repository) CreatePasswordReset(ctx context.Context, reset *PasswordReset) error {
+	// 生成UUID
+	reset.ID = uuid.New().String()
+
+	query := `
+		INSERT INTO password_resets (id, email, user_type, token, ip_address, used, used_at, expires_at, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+	`
+
+	_, err := r.GetDB().ExecContext(ctx, query,
+		reset.ID, reset.Email, reset.UserType, reset.Token, reset.IPAddress, reset.Used, reset.UsedAt, reset.ExpiresAt)
+
+	if err != nil {
+		return fmt.Errorf("failed to create password reset record: %w", err)
+	}
+
+	return nil
+}

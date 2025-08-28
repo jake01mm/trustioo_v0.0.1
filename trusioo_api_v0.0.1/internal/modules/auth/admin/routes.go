@@ -27,6 +27,8 @@ func (r *Routes) RegisterRoutes(router *gin.RouterGroup) {
 		// 公开路由（不需要认证）
 		admin.POST("/login", r.handler.Login)
 		admin.POST("/verify-login", r.handler.VerifyLogin)
+		admin.POST("/forgot-password", r.handler.ForgotPassword)
+		admin.POST("/reset-password", r.handler.ResetPassword)
 
 		// 需要认证的路由
 		authenticated := admin.Group("")
