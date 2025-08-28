@@ -101,6 +101,7 @@ type HealthConfig struct {
 	Timeout       time.Duration `json:"timeout" env:"HEALTH_CHECK_TIMEOUT" default:"5s"`
 }
 
+
 // Load 加载配置
 func Load() (*Config, error) {
 	// 加载.env文件
@@ -187,6 +188,7 @@ func Load() (*Config, error) {
 		CheckInterval: getEnvAsDuration("HEALTH_CHECK_INTERVAL", 30*time.Second),
 		Timeout:       getEnvAsDuration("HEALTH_CHECK_TIMEOUT", 5*time.Second),
 	}
+
 
 	return cfg, nil
 }

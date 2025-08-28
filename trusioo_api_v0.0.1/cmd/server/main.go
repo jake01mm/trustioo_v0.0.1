@@ -241,3 +241,4 @@ func setupWalletModule(routerEngine *router.Router, db *database.Database, _ *au
 
 	logger.Info("Wallet module initialized")
 }
+
