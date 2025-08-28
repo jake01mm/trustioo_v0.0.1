@@ -27,21 +27,5 @@ CREATE INDEX IF NOT EXISTS idx_email_verifications_expires_at ON email_verificat
 CREATE INDEX IF NOT EXISTS idx_email_verifications_verified ON email_verifications(verified);
 CREATE INDEX IF NOT EXISTS idx_email_verifications_reference_id ON email_verifications(reference_id);
 
--- 创建复合唯一索引，防止同一邮箱同一类型有多个未过期的验证码
-CREATE UNIQUE INDEX IF NOT EXISTS idx_email_verifications_unique_active 
-ON email_verifications(email, type, user_type) 
-WHERE verified = false AND expires_at > NOW();
-
--- 创建清理过期记录的函数
-CREATE OR REPLACE FUNCTION cleanup_expired_email_verifications()
-RETURNS INTEGER AS $$
-DECLARE
-    deleted_count INTEGER;
-BEGIN
-    DELETE FROM email_verifications 
-    WHERE expires_at < NOW() - INTERVAL '7 days'; -- 保留7天的过期记录用于审计
-    
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
-    RETURN deleted_count;
-END;
-$$ LANGUAGE plpgsql;
+-- 注意：由于业务逻辑会处理重复验证码的问题，这里不创建复合唯一索引
+-- 应用层会在创建新验证码前删除旧的未验证记录

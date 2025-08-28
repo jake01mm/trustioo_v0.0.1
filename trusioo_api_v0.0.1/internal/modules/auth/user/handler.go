@@ -406,12 +406,13 @@ func (h *Handler) ForgotPassword(c *gin.Context) {
 		message := ""
 
 		// 根据错误类型返回不同的响应
-		if err == auth.ErrUserNotFound {
+		switch err {
+		case auth.ErrUserNotFound:
 			message = "Please register first, email not found"
-		} else if err == auth.ErrTooManyAttempts {
+		case auth.ErrTooManyAttempts:
 			statusCode = http.StatusTooManyRequests
 			message = "Too many attempts, please try again later"
-		} else {
+		default:
 			message = "Failed to send verification code"
 		}
 
@@ -464,14 +465,15 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 		message := ""
 
 		// 根据错误类型返回不同的响应
-		if err == auth.ErrUserNotFound {
+		switch err {
+		case auth.ErrUserNotFound:
 			message = "User not found"
-		} else if err == auth.ErrInvalidVerificationCode {
+		case auth.ErrInvalidVerificationCode:
 			message = "Invalid or expired verification code"
-		} else if err == auth.ErrTooManyAttempts {
+		case auth.ErrTooManyAttempts:
 			statusCode = http.StatusTooManyRequests
 			message = "Too many attempts, please try again later"
-		} else {
+		default:
 			message = "Failed to reset password"
 		}
 
