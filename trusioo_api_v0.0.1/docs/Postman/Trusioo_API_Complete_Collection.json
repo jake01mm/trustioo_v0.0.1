@@ -1,0 +1,739 @@
+{
+  "info": {
+    "name": "Trusioo API - 完整认证集合",
+    "description": "Trusioo API的完整认证系统集合，包含用户、管理员、买家认证以及健康检查接口",
+    "version": "1.0.0",
+    "_postman_id": "trusioo-api-complete-auth-collection"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "buyer_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 健康检查",
+      "item": [
+        {
+          "name": "整体健康检查",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "检查API整体健康状态"
+          },
+          "response": []
+        },
+        {
+          "name": "数据库健康检查",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/database",
+              "host": ["{{base_url}}"],
+              "path": ["health", "database"]
+            },
+            "description": "检查数据库连接状态"
+          },
+          "response": []
+        },
+        {
+          "name": "Redis健康检查",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/redis",
+              "host": ["{{base_url}}"],
+              "path": ["health", "redis"]
+            },
+            "description": "检查Redis连接状态"
+          },
+          "response": []
+        },
+        {
+          "name": "API v1健康检查",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/api/v1",
+              "host": ["{{base_url}}"],
+              "path": ["health", "api", "v1"]
+            },
+            "description": "检查API v1服务状态"
+          },
+          "response": []
+        },
+        {
+          "name": "就绪状态检查 (Kubernetes)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/readiness",
+              "host": ["{{base_url}}"],
+              "path": ["health", "readiness"]
+            },
+            "description": "Kubernetes就绪状态检查"
+          },
+          "response": []
+        },
+        {
+          "name": "存活状态检查 (Kubernetes)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/liveness",
+              "host": ["{{base_url}}"],
+              "path": ["health", "liveness"]
+            },
+            "description": "Kubernetes存活状态检查"
+          },
+          "response": []
+        }
+      ],
+      "description": "系统健康检查相关接口"
+    },
+    {
+      "name": "02 用户认证 (User)",
+      "item": [
+        {
+          "name": "用户注册（简化版）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.user_id) {",
+                  "        pm.environment.set('user_id', response.user_id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/user/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "user", "register"]
+            },
+            "description": "简化用户注册（仅需邮箱和密码）"
+          },
+          "response": []
+        },
+        {
+          "name": "用户登录（发送验证码）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.verification_code) {",
+                  "        pm.environment.set('verification_code', response.verification_code);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/user/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "user", "login"]
+            },
+            "description": "用户登录第一步：发送验证码到邮箱"
+          },
+          "response": []
+        },
+        {
+          "name": "验证登录并获取令牌",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.tokens) {",
+                  "        pm.environment.set('access_token', response.tokens.access_token);",
+                  "        pm.environment.set('refresh_token', response.tokens.refresh_token);",
+                  "    }",
+                  "    if (response.user && response.user.id) {",
+                  "        pm.environment.set('user_id', response.user.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"login_code\": \"{{verification_code}}\",\n  \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/user/verify-login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "user", "verify-login"]
+            },
+            "description": "用户登录第二步：验证验证码并获取JWT令牌"
+          },
+          "response": []
+        },
+        {
+          "name": "获取用户资料",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/user/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "user", "profile"]
+            },
+            "description": "获取当前登录用户的资料信息"
+          },
+          "response": []
+        },
+        {
+          "name": "用户登出",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/user/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "user", "logout"]
+            },
+            "description": "用户登出，撤销当前令牌"
+          },
+          "response": []
+        }
+      ],
+      "description": "用户认证相关接口"
+    },
+    {
+      "name": "03 管理员认证 (Admin)",
+      "item": [
+        {
+          "name": "管理员登录（发送验证码）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.verification_code) {",
+                  "        pm.environment.set('admin_verification_code', response.verification_code);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/admin/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "admin", "login"]
+            },
+            "description": "管理员登录第一步：发送验证码"
+          },
+          "response": []
+        },
+        {
+          "name": "验证管理员登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.tokens) {",
+                  "        pm.environment.set('admin_access_token', response.tokens.access_token);",
+                  "        pm.environment.set('admin_refresh_token', response.tokens.refresh_token);",
+                  "    }",
+                  "    if (response.admin && response.admin.id) {",
+                  "        pm.environment.set('admin_id', response.admin.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123456\",\n  \"login_code\": \"{{admin_verification_code}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/admin/verify-login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "admin", "verify-login"]
+            },
+            "description": "管理员登录第二步：验证验证码并获取令牌"
+          },
+          "response": []
+        },
+        {
+          "name": "刷新管理员令牌",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.tokens) {",
+                  "        pm.environment.set('admin_access_token', response.tokens.access_token);",
+                  "        pm.environment.set('admin_refresh_token', response.tokens.refresh_token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{admin_refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/admin/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "admin", "refresh"]
+            },
+            "description": "使用刷新令牌获取新的访问令牌"
+          },
+          "response": []
+        },
+        {
+          "name": "获取管理员资料",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/admin/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "admin", "profile"]
+            },
+            "description": "获取当前登录管理员的资料信息"
+          },
+          "response": []
+        },
+        {
+          "name": "修改管理员密码",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"admin123456\",\n  \"new_password\": \"newadmin123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/admin/password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "admin", "password"]
+            },
+            "description": "修改管理员密码"
+          },
+          "response": []
+        },
+        {
+          "name": "管理员登出",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/admin/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "admin", "logout"]
+            },
+            "description": "管理员登出，撤销当前令牌"
+          },
+          "response": []
+        }
+      ],
+      "description": "管理员认证相关接口"
+    },
+    {
+      "name": "04 买家认证 (Buyer)",
+      "item": [
+        {
+          "name": "买家注册",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.buyer && response.buyer.id) {",
+                  "        pm.environment.set('buyer_id', response.buyer.id);",
+                  "    }",
+                  "    if (response.tokens) {",
+                  "        pm.environment.set('buyer_access_token', response.tokens.access_token);",
+                  "        pm.environment.set('buyer_refresh_token', response.tokens.refresh_token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"buyer@company.com\",\n  \"password\": \"buyer123456\",\n  \"company_name\": \"ABC Company Ltd\",\n  \"contact_name\": \"John Smith\",\n  \"phone\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/buyer/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "buyer", "register"]
+            },
+            "description": "买家注册（需要公司信息）"
+          },
+          "response": []
+        },
+        {
+          "name": "买家登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.tokens) {",
+                  "        pm.environment.set('buyer_access_token', response.tokens.access_token);",
+                  "        pm.environment.set('buyer_refresh_token', response.tokens.refresh_token);",
+                  "    }",
+                  "    if (response.buyer && response.buyer.id) {",
+                  "        pm.environment.set('buyer_id', response.buyer.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"buyer@company.com\",\n  \"password\": \"buyer123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/buyer/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "buyer", "login"]
+            },
+            "description": "买家直接登录（无需验证码）"
+          },
+          "response": []
+        },
+        {
+          "name": "获取买家资料",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{buyer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/buyer/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "buyer", "profile"]
+            },
+            "description": "获取当前登录买家的资料信息"
+          },
+          "response": []
+        },
+        {
+          "name": "买家登出",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{buyer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/buyer/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "buyer", "logout"]
+            },
+            "description": "买家登出，撤销当前令牌"
+          },
+          "response": []
+        }
+      ],
+      "description": "买家认证相关接口"
+    }
+  ]
+}

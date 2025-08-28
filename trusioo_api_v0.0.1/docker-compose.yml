@@ -1,0 +1,131 @@
+services:
+  # 应用程序服务
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: trusioo_api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=trusioo_api
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - go_mod_cache:/go/pkg/mod
+    networks:
+      - trusioo_network
+
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: trusioo_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: trusioo_api
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - trusioo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: trusioo_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./docker/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - trusioo_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 数据库迁移服务
+  migrate:
+    image: migrate/migrate:v4.16.2
+    container_name: trusioo_migrate
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - trusioo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      -path=/migrations
+      -database="postgres://postgres:password@postgres:5432/trusioo_api?sslmode=disable"
+      up
+    profiles:
+      - migrate
+
+  # 管理工具（可选）
+  adminer:
+    image: adminer:4.8.1
+    container_name: trusioo_adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    networks:
+      - trusioo_network
+    profiles:
+      - tools
+
+  # Redis管理工具（可选）
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: trusioo_redis_commander
+    restart: unless-stopped
+    ports:
+      - "8082:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    networks:
+      - trusioo_network
+    profiles:
+      - tools
+
+# 数据卷
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  go_mod_cache:
+    driver: local
+
+# 网络
+networks:
+  trusioo_network:
+    driver: bridge

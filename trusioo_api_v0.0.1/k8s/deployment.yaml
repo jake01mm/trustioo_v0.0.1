@@ -1,0 +1,164 @@
+# Kubernetes部署配置
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trusioo-api
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trusioo-api-config
+  namespace: trusioo-api
+data:
+  DATABASE_HOST: "postgres-service"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "trusioo_api"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  LOG_LEVEL: "info"
+  GIN_MODE: "release"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: trusioo-api-secrets
+  namespace: trusioo-api
+type: Opaque
+stringData:
+  DATABASE_USERNAME: "postgres"
+  DATABASE_PASSWORD: "your-db-password"
+  JWT_SECRET: "your-jwt-secret"
+  PASSWORD_ENCRYPTION_KEY: "your-encryption-key"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trusioo-api
+  namespace: trusioo-api
+  labels:
+    app: trusioo-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: trusioo-api
+  template:
+    metadata:
+      labels:
+        app: trusioo-api
+    spec:
+      containers:
+      - name: trusioo-api
+        image: trusioo/api:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: trusioo-api-config
+        - secretRef:
+            name: trusioo-api-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trusioo-api-service
+  namespace: trusioo-api
+  labels:
+    app: trusioo-api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: trusioo-api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trusioo-api-ingress
+  namespace: trusioo-api
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+  - hosts:
+    - api.trusioo.com
+    secretName: trusioo-api-tls
+  rules:
+  - host: api.trusioo.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: trusioo-api-service
+            port:
+              number: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: trusioo-api-pdb
+  namespace: trusioo-api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: trusioo-api
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: trusioo-api-hpa
+  namespace: trusioo-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: trusioo-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
