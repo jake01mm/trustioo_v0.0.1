@@ -19,6 +19,7 @@ import (
 	"trusioo_api_v0.0.1/internal/modules/auth/admin"
 	"trusioo_api_v0.0.1/internal/modules/auth/user"
 	"trusioo_api_v0.0.1/internal/modules/health"
+	"trusioo_api_v0.0.1/internal/modules/user_management"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -146,6 +147,9 @@ func setupServices(routerEngine *router.Router, db *database.Database, redisClie
 
 	// 设置认证模块
 	setupAuthModules(routerEngine, db, jwtManager, authMiddle, passwordEncryptor, logger)
+
+	// 设置用户管理模块
+	setupUserManagementModule(routerEngine, db, jwtManager, authMiddle, passwordEncryptor, logger)
 }
 
 // setupHealthModule 设置健康检查模块
@@ -198,4 +202,21 @@ func setupUserAuth(authGroup *gin.RouterGroup, db *database.Database, jwtManager
 
 	userRoutes.RegisterRoutes(authGroup)
 	logger.Info("User auth module initialized")
+}
+
+// setupUserManagementModule 设置用户管理模块
+func setupUserManagementModule(routerEngine *router.Router, db *database.Database, jwtManager *auth.JWTManager, authMiddle *auth.AuthMiddleware, passwordEncryptor *cryptoutil.PasswordEncryptor, logger *logrus.Logger) {
+	// 获取API v1路由分组
+	v1Group := routerEngine.GetV1Group()
+
+	// 初始化用户管理模块的依赖
+	userRepo := user.NewRepository(db, logger) // 复用用户仓储
+	userMgmtRepo := user_management.NewRepository(db, logger)
+	userMgmtService := user_management.NewService(userMgmtRepo, userRepo, passwordEncryptor, logger)
+	userMgmtHandler := user_management.NewHandler(userMgmtService, logger)
+	userMgmtRoutes := user_management.NewRoutes(userMgmtHandler, authMiddle)
+
+	// 注册路由
+	userMgmtRoutes.RegisterRoutes(v1Group)
+	logger.Info("User management module initialized")
 }

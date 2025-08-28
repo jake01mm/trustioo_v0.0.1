@@ -85,6 +85,11 @@
       "key": "verification_code",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "target_user_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -670,6 +675,320 @@
         }
       ],
       "description": "管理员认证相关接口"
+    },
+    {
+      "name": "04 用户管理 (User Management)",
+      "item": [
+        {
+          "name": "获取用户统计信息",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "statistics"]
+            },
+            "description": "获取用户统计信息，包括总数、新增、验证状态等"
+          },
+          "response": []
+        },
+        {
+          "name": "获取用户列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users?page=1&page_size=20&sort_by=created_at&sort_dir=desc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "created_at"
+                },
+                {
+                  "key": "sort_dir",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "获取用户列表，支持分页、排序、筛选和搜索"
+          },
+          "response": []
+        },
+        {
+          "name": "搜索用户",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users?search=user@example.com&status=active&email_verified=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "user@example.com"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "email_verified",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "搜索用户，支持邮箱、姓名、状态等筛选条件"
+          },
+          "response": []
+        },
+        {
+          "name": "获取用户详情",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.id) {",
+                  "        pm.environment.set('target_user_id', response.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users", "{{user_id}}"]
+            },
+            "description": "获取指定用户的详细信息，包括活动统计"
+          },
+          "response": []
+        },
+        {
+          "name": "获取用户活动信息",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users/{{user_id}}/activity",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users", "{{user_id}}", "activity"]
+            },
+            "description": "获取用户的活动信息，包括登录记录和会话信息"
+          },
+          "response": []
+        },
+        {
+          "name": "更新用户状态",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"suspended\",\n  \"reason\": \"违反用户协议\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users/{{user_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users", "{{user_id}}", "status"]
+            },
+            "description": "更新用户的状态（激活、停用、暂停）"
+          },
+          "response": []
+        },
+        {
+          "name": "暂停用户",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"违反用户协议\",\n  \"duration\": 7\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users/{{user_id}}/suspend",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users", "{{user_id}}", "suspend"]
+            },
+            "description": "暂停用户账户并强制登出"
+          },
+          "response": []
+        },
+        {
+          "name": "重新激活用户",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users/{{user_id}}/reactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users", "{{user_id}}", "reactivate"]
+            },
+            "description": "重新激活已暂停或停用的用户账户"
+          },
+          "response": []
+        },
+        {
+          "name": "重置用户密码",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_password\": \"newuserpassword123\",\n  \"send_notification\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users/{{user_id}}/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users", "{{user_id}}", "reset-password"]
+            },
+            "description": "管理员重置用户密码"
+          },
+          "response": []
+        },
+        {
+          "name": "强制用户登出",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"logout_all\": true,\n  \"reason\": \"安全原因\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users/{{user_id}}/force-logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users", "{{user_id}}", "force-logout"]
+            },
+            "description": "强制用户登出所有或指定会话"
+          },
+          "response": []
+        },
+        {
+          "name": "验证用户邮箱",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/user-management/users/{{user_id}}/verify-email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "user-management", "users", "{{user_id}}", "verify-email"]
+            },
+            "description": "管理员手动验证用户邮箱"
+          },
+          "response": []
+        }
+      ],
+      "description": "用户管理相关接口，仅管理员可访问"
     }
   ]
 }
