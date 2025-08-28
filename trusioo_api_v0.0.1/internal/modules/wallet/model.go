@@ -28,11 +28,16 @@ func (ws *WalletStatus) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
-	if str, ok := value.(string); ok {
-		*ws = WalletStatus(str)
+	switch v := value.(type) {
+	case string:
+		*ws = WalletStatus(v)
 		return nil
+	case []byte:
+		*ws = WalletStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("cannot scan %T into WalletStatus", value)
 	}
-	return fmt.Errorf("cannot scan %T into WalletStatus", value)
 }
 
 // TransactionType 交易类型
@@ -61,11 +66,16 @@ func (tt *TransactionType) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
-	if str, ok := value.(string); ok {
-		*tt = TransactionType(str)
+	switch v := value.(type) {
+	case string:
+		*tt = TransactionType(v)
 		return nil
+	case []byte:
+		*tt = TransactionType(v)
+		return nil
+	default:
+		return fmt.Errorf("cannot scan %T into TransactionType", value)
 	}
-	return fmt.Errorf("cannot scan %T into TransactionType", value)
 }
 
 // TransactionStatus 交易状态
@@ -90,11 +100,16 @@ func (ts *TransactionStatus) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
-	if str, ok := value.(string); ok {
-		*ts = TransactionStatus(str)
+	switch v := value.(type) {
+	case string:
+		*ts = TransactionStatus(v)
 		return nil
+	case []byte:
+		*ts = TransactionStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("cannot scan %T into TransactionStatus", value)
 	}
-	return fmt.Errorf("cannot scan %T into TransactionStatus", value)
 }
 
 // WithdrawalStatus 提现状态
@@ -120,11 +135,16 @@ func (ws *WithdrawalStatus) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
-	if str, ok := value.(string); ok {
-		*ws = WithdrawalStatus(str)
+	switch v := value.(type) {
+	case string:
+		*ws = WithdrawalStatus(v)
 		return nil
+	case []byte:
+		*ws = WithdrawalStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("cannot scan %T into WithdrawalStatus", value)
 	}
-	return fmt.Errorf("cannot scan %T into WithdrawalStatus", value)
 }
 
 // BankAccountStatus 银行账户状态
@@ -147,11 +167,16 @@ func (bas *BankAccountStatus) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
-	if str, ok := value.(string); ok {
-		*bas = BankAccountStatus(str)
+	switch v := value.(type) {
+	case string:
+		*bas = BankAccountStatus(v)
 		return nil
+	case []byte:
+		*bas = BankAccountStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("cannot scan %T into BankAccountStatus", value)
 	}
-	return fmt.Errorf("cannot scan %T into BankAccountStatus", value)
 }
 
 // === 数据模型定义 ===

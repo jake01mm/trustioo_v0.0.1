@@ -21,7 +21,7 @@ INSERT INTO admins (email, name, password, role, active)
 VALUES (
     'admin@trusioo.com', 
     'Super Admin',
-    '\$2a\$10\$5uYi4nTPak35f1.TVa7MKusFESFNnhHHEzUoEPOsTfrGyfCZ0rSTi', -- bcrypt hash of 'admin123'
+    '\$2a\$10\$zoICaxBHUYBAiaWRPtFM..hqi3C64ovxkpOg4e8XkeXPV5LBOzGy6', -- hmac-bcrypt hash of 'admin123'
     'super_admin',
     true
 ) ON CONFLICT (email) DO NOTHING;

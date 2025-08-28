@@ -1,0 +1,1410 @@
+{
+  "info": {
+    "name": "Trusioo API - Wallet Module Complete Collection",
+    "description": "Complete API collection for Trusioo Wallet Module including user wallet management, bank accounts, withdrawals, transactions, and admin operations",
+    "version": "1.0.0",
+    "_postman_id": "trusioo-wallet-api-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set authorization header for authenticated requests",
+          "if (pm.request.auth && pm.request.auth.type === 'bearer') {",
+          "  const token = pm.collectionVariables.get('access_token');",
+          "  if (token) {",
+          "    pm.request.headers.upsert({key: 'Authorization', value: `Bearer ${token}`});",
+          "  }",
+          "}",
+          "",
+          "// Set common headers",
+          "pm.request.headers.upsert({key: 'Content-Type', value: 'application/json'});",
+          "pm.request.headers.upsert({key: 'Accept', value: 'application/json'});"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common response tests",
+          "pm.test('Response time is less than 2000ms', function () {",
+          "  pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "pm.test('Response has valid JSON', function () {",
+          "  pm.response.to.be.json;",
+          "});",
+          "",
+          "// Auto-save tokens if present in response",
+          "if (pm.response.code === 200) {",
+          "  const response = pm.response.json();",
+          "  if (response.tokens) {",
+          "    pm.collectionVariables.set('access_token', response.tokens.access_token);",
+          "    pm.collectionVariables.set('refresh_token', response.tokens.refresh_token);",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "wallet_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bank_account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "withdrawal_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "currency_id_tru",
+      "value": "dbac3bce-a957-438b-8566-f02288a251ca",
+      "type": "string"
+    },
+    {
+      "key": "currency_id_ngn",
+      "value": "b1ba2284-18da-4f26-903b-4e91b7390294",
+      "type": "string"
+    },
+    {
+      "key": "bank_id_access",
+      "value": "f0859d96-12b0-4380-b265-64cd60e39b82",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "description": "Authentication endpoints for obtaining access tokens",
+      "item": [
+        {
+          "name": "Admin Login Step 1 - Get Verification Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains verification code', function () {",
+                  "  pm.expect(response).to.have.property('verification_code');",
+                  "});",
+                  "",
+                  "// Save verification code for next request",
+                  "if (response.verification_code) {",
+                  "  pm.collectionVariables.set('admin_verification_code', response.verification_code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@trusioo.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/admin/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "admin", "login"]
+            }
+          }
+        },
+        {
+          "name": "Admin Login Step 2 - Verify and Get Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains tokens', function () {",
+                  "  pm.expect(response).to.have.property('tokens');",
+                  "  pm.expect(response.tokens).to.have.property('access_token');",
+                  "});",
+                  "",
+                  "// Auto-save tokens",
+                  "if (response.tokens) {",
+                  "  pm.collectionVariables.set('access_token', response.tokens.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', response.tokens.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@trusioo.com\",\n  \"password\": \"admin123\",\n  \"login_code\": \"{{admin_verification_code}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/admin/verify-login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "admin", "verify-login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌐 Public APIs",
+      "description": "Public wallet APIs that don't require authentication",
+      "item": [
+        {
+          "name": "Get All Currencies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains currencies array', function () {",
+                  "  pm.expect(response).to.have.property('currencies');",
+                  "  pm.expect(response.currencies).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Contains TRU and NGN currencies', function () {",
+                  "  const currencies = response.currencies;",
+                  "  const codes = currencies.map(c => c.code);",
+                  "  pm.expect(codes).to.include('TRU');",
+                  "  pm.expect(codes).to.include('NGN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/currencies",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "currencies"]
+            }
+          }
+        },
+        {
+          "name": "Get All Banks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains banks array', function () {",
+                  "  pm.expect(response).to.have.property('banks');",
+                  "  pm.expect(response.banks).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Banks have required fields', function () {",
+                  "  const banks = response.banks;",
+                  "  if (banks.length > 0) {",
+                  "    pm.expect(banks[0]).to.have.property('id');",
+                  "    pm.expect(banks[0]).to.have.property('name');",
+                  "    pm.expect(banks[0]).to.have.property('code');",
+                  "    pm.expect(banks[0]).to.have.property('country_code');",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/banks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "banks"]
+            }
+          }
+        },
+        {
+          "name": "Get Exchange Rate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains exchange rate data', function () {",
+                  "  pm.expect(response).to.have.property('from_currency');",
+                  "  pm.expect(response).to.have.property('to_currency');",
+                  "  pm.expect(response).to.have.property('rate');",
+                  "});",
+                  "",
+                  "pm.test('Rate is a positive number', function () {",
+                  "  pm.expect(response.rate).to.be.a('number');",
+                  "  pm.expect(response.rate).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/exchange-rate?from=TRU&to=NGN",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "exchange-rate"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "TRU"
+                },
+                {
+                  "key": "to",
+                  "value": "NGN"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 User Wallet APIs",
+      "description": "User wallet management APIs (requires user authentication)",
+      "item": [
+        {
+          "name": "Get My Wallet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains wallet data', function () {",
+                  "  pm.expect(response).to.have.property('id');",
+                  "  pm.expect(response).to.have.property('balance');",
+                  "  pm.expect(response).to.have.property('status');",
+                  "});",
+                  "",
+                  "// Save wallet ID for other requests",
+                  "if (response.id) {",
+                  "  pm.collectionVariables.set('wallet_id', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet"]
+            }
+          }
+        },
+        {
+          "name": "Set Transaction PIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pin\": \"123456\",\n  \"confirm_pin\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/transaction-pin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "transaction-pin"]
+            }
+          }
+        },
+        {
+          "name": "Change Transaction PIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_pin\": \"123456\",\n  \"new_pin\": \"654321\",\n  \"confirm_pin\": \"654321\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/transaction-pin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "transaction-pin"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏦 Bank Account Management",
+      "description": "User bank account management APIs",
+      "item": [
+        {
+          "name": "Get My Bank Accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains bank accounts array', function () {",
+                  "  pm.expect(response).to.have.property('bank_accounts');",
+                  "  pm.expect(response.bank_accounts).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/bank-accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "bank-accounts"]
+            }
+          }
+        },
+        {
+          "name": "Add Bank Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains bank account data', function () {",
+                  "  pm.expect(response).to.have.property('id');",
+                  "  pm.expect(response).to.have.property('account_number');",
+                  "});",
+                  "",
+                  "// Save bank account ID",
+                  "if (response.id) {",
+                  "  pm.collectionVariables.set('bank_account_id', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bank_id\": \"{{bank_id_access}}\",\n  \"account_number\": \"1234567890\",\n  \"account_name\": \"John Doe\",\n  \"account_type\": \"savings\",\n  \"is_default\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/bank-accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "bank-accounts"]
+            }
+          }
+        },
+        {
+          "name": "Update Bank Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains updated data', function () {",
+                  "  pm.expect(response).to.have.property('account_name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account_name\": \"John Smith Doe\",\n  \"account_type\": \"current\",\n  \"is_default\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/bank-accounts/{{bank_account_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "bank-accounts", "{{bank_account_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Bank Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 204', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/bank-accounts/{{bank_account_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "bank-accounts", "{{bank_account_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Withdrawal Management",
+      "description": "User withdrawal management APIs",
+      "item": [
+        {
+          "name": "Calculate Withdrawal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains calculation data', function () {",
+                  "  pm.expect(response).to.have.property('amount_tru');",
+                  "  pm.expect(response).to.have.property('amount_local');",
+                  "  pm.expect(response).to.have.property('exchange_rate');",
+                  "  pm.expect(response).to.have.property('fee_tru');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currency_code\": \"NGN\",\n  \"amount_local\": 22000.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/withdrawal/calculate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "withdrawal", "calculate"]
+            }
+          }
+        },
+        {
+          "name": "Create Withdrawal Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains withdrawal data', function () {",
+                  "  pm.expect(response).to.have.property('id');",
+                  "  pm.expect(response).to.have.property('status');",
+                  "});",
+                  "",
+                  "// Save withdrawal ID",
+                  "if (response.id) {",
+                  "  pm.collectionVariables.set('withdrawal_id', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currency_code\": \"NGN\",\n  \"amount_local\": 22000.00,\n  \"bank_account_id\": \"{{bank_account_id}}\",\n  \"transaction_pin\": \"654321\",\n  \"description\": \"Test withdrawal\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/withdrawals",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "withdrawals"]
+            }
+          }
+        },
+        {
+          "name": "Get My Withdrawals",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains withdrawals array', function () {",
+                  "  pm.expect(response).to.have.property('withdrawals');",
+                  "  pm.expect(response.withdrawals).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "  pm.expect(response).to.have.property('total');",
+                  "  pm.expect(response).to.have.property('page');",
+                  "  pm.expect(response).to.have.property('page_size');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/withdrawals?page=1&page_size=20&status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "withdrawals"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Withdrawal Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains withdrawal details', function () {",
+                  "  pm.expect(response).to.have.property('id');",
+                  "  pm.expect(response).to.have.property('amount_tru');",
+                  "  pm.expect(response).to.have.property('amount_local');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/withdrawals/{{withdrawal_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "withdrawals", "{{withdrawal_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Withdrawal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/withdrawals/{{withdrawal_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "withdrawals", "{{withdrawal_id}}", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Transaction History",
+      "description": "User transaction history APIs",
+      "item": [
+        {
+          "name": "Get My Transactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains transactions array', function () {",
+                  "  pm.expect(response).to.have.property('transactions');",
+                  "  pm.expect(response.transactions).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "  pm.expect(response).to.have.property('total');",
+                  "  pm.expect(response).to.have.property('page');",
+                  "  pm.expect(response).to.have.property('page_size');",
+                  "});",
+                  "",
+                  "// Save first transaction ID if available",
+                  "if (response.transactions.length > 0) {",
+                  "  pm.collectionVariables.set('transaction_id', response.transactions[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/transactions?page=1&page_size=20&type=withdrawal&status=completed&sort_by=created_at&sort_dir=desc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "transactions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "type",
+                  "value": "withdrawal"
+                },
+                {
+                  "key": "status",
+                  "value": "completed"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "created_at"
+                },
+                {
+                  "key": "sort_dir",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Transaction Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains transaction details', function () {",
+                  "  pm.expect(response).to.have.property('id');",
+                  "  pm.expect(response).to.have.property('type');",
+                  "  pm.expect(response).to.have.property('status');",
+                  "  pm.expect(response).to.have.property('amount');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/transactions/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "transactions", "{{transaction_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Admin APIs - Withdrawal Management",
+      "description": "Admin APIs for managing withdrawals (requires admin authentication)",
+      "item": [
+        {
+          "name": "Get Pending Withdrawals",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains withdrawals array', function () {",
+                  "  pm.expect(response).to.have.property('withdrawals');",
+                  "  pm.expect(response.withdrawals).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/withdrawals?page=1&page_size=20&status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "withdrawals"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Withdrawal Detail (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains detailed withdrawal info', function () {",
+                  "  pm.expect(response).to.have.property('id');",
+                  "  pm.expect(response).to.have.property('user_name');",
+                  "  pm.expect(response).to.have.property('user_email');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/withdrawals/{{withdrawal_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "withdrawals", "{{withdrawal_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Review Withdrawal - Approve",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\",\n  \"notes\": \"Approved after verification\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/withdrawals/{{withdrawal_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "withdrawals", "{{withdrawal_id}}", "review"]
+            }
+          }
+        },
+        {
+          "name": "Review Withdrawal - Reject",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"reject\",\n  \"notes\": \"Insufficient documentation provided\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/withdrawals/{{withdrawal_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "withdrawals", "{{withdrawal_id}}", "review"]
+            }
+          }
+        },
+        {
+          "name": "Process Withdrawal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_reference\": \"TXN123456789\",\n  \"notes\": \"Payment processed successfully via bank transfer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/withdrawals/{{withdrawal_id}}/process",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "withdrawals", "{{withdrawal_id}}", "process"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Admin APIs - Exchange Rate Management",
+      "description": "Admin APIs for managing exchange rates",
+      "item": [
+        {
+          "name": "Get Admin Exchange Rates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains exchange rates', function () {",
+                  "  pm.expect(response).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/exchange-rates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "exchange-rates"]
+            }
+          }
+        },
+        {
+          "name": "Create Exchange Rate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains rate data', function () {",
+                  "  pm.expect(response).to.have.property('id');",
+                  "  pm.expect(response).to.have.property('rate');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from_currency_code\": \"TRU\",\n  \"to_currency_code\": \"GHS\",\n  \"rate\": 15.50,\n  \"notes\": \"Updated market rate for TRU to GHS\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/exchange-rates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "exchange-rates"]
+            }
+          }
+        },
+        {
+          "name": "Update Exchange Rate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains updated rate', function () {",
+                  "  pm.expect(response).to.have.property('rate');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from_currency_code\": \"TRU\",\n  \"to_currency_code\": \"NGN\",\n  \"rate\": 225.00,\n  \"notes\": \"Updated market rate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/exchange-rates/{{rate_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "exchange-rates", "{{rate_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Admin APIs - Wallet Management",
+      "description": "Admin APIs for managing user wallets",
+      "item": [
+        {
+          "name": "Get User Wallet (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains wallet data', function () {",
+                  "  pm.expect(response).to.have.property('id');",
+                  "  pm.expect(response).to.have.property('balance');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/wallets/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "wallets", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Adjust Wallet Balance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"amount\": 100.00,\n  \"type\": \"bonus\",\n  \"description\": \"Welcome bonus\",\n  \"reason\": \"New user promotion\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/wallets/adjust",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "wallets", "adjust"]
+            }
+          }
+        },
+        {
+          "name": "Freeze Wallet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Suspicious activity detected\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/wallets/{{user_id}}/freeze",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "wallets", "{{user_id}}", "freeze"]
+            }
+          }
+        },
+        {
+          "name": "Unfreeze Wallet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Operation successful', function () {",
+                  "  pm.expect(response).to.have.property('success');",
+                  "  pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Investigation completed, account cleared\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/wallets/{{user_id}}/unfreeze",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "wallets", "{{user_id}}", "unfreeze"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Admin APIs - Statistics",
+      "description": "Admin APIs for wallet and transaction statistics",
+      "item": [
+        {
+          "name": "Get Wallet Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains wallet statistics', function () {",
+                  "  pm.expect(response).to.have.property('total_wallets');",
+                  "  pm.expect(response).to.have.property('active_wallets');",
+                  "  pm.expect(response).to.have.property('total_balance');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/statistics/wallets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "statistics", "wallets"]
+            }
+          }
+        },
+        {
+          "name": "Get Transaction Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains transaction statistics', function () {",
+                  "  pm.expect(response).to.have.property('total_transactions');",
+                  "  pm.expect(response).to.have.property('today_transactions');",
+                  "  pm.expect(response).to.have.property('total_volume');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/statistics/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "statistics", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Get Withdrawal Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test('Response contains withdrawal statistics', function () {",
+                  "  pm.expect(response).to.have.property('pending_withdrawals');",
+                  "  pm.expect(response).to.have.property('completed_withdrawals');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wallet/admin/statistics/withdrawals",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wallet", "admin", "statistics", "withdrawals"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

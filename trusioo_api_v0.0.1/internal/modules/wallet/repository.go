@@ -9,6 +9,7 @@ import (
 	"trusioo_api_v0.0.1/internal/infrastructure/database"
 	"trusioo_api_v0.0.1/pkg/cryptoutil"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -512,11 +513,86 @@ func (r *repository) GetBanks(ctx context.Context, countryCode string) ([]*Bank,
 }
 
 func (r *repository) GetBankByID(ctx context.Context, bankID string) (*Bank, error) {
-	return nil, fmt.Errorf("not implemented")
+	query := `
+		SELECT b.id, b.name, b.code, b.country_code, b.currency_id, b.swift_code,
+			   b.routing_number, b.is_active, b.logo_url, b.website_url, b.support_phone,
+			   b.support_email, b.description, b.created_at, b.updated_at,
+			   c.id as "currency.id", c.code as "currency.code", c.name as "currency.name",
+			   c.symbol as "currency.symbol", c.is_fiat as "currency.is_fiat",
+			   c.decimal_places as "currency.decimal_places"
+		FROM banks b
+		JOIN currencies c ON b.currency_id = c.id
+		WHERE b.id = $1 AND b.is_active = true`
+
+	var bank Bank
+	var currency Currency
+
+	err := r.db.QueryRowContext(ctx, query, bankID).Scan(
+		&bank.ID, &bank.Name, &bank.Code, &bank.CountryCode, &bank.CurrencyID,
+		&bank.SwiftCode, &bank.RoutingNumber, &bank.IsActive, &bank.LogoURL,
+		&bank.WebsiteURL, &bank.SupportPhone, &bank.SupportEmail, &bank.Description,
+		&bank.CreatedAt, &bank.UpdatedAt,
+		&currency.ID, &currency.Code, &currency.Name, &currency.Symbol,
+		&currency.IsFiat, &currency.DecimalPlaces,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("bank not found with ID %s", bankID)
+		}
+		r.logger.WithError(err).WithField("bank_id", bankID).Error("Failed to get bank by ID")
+		return nil, fmt.Errorf("failed to get bank: %w", err)
+	}
+
+	bank.Currency = &currency
+	return &bank, nil
 }
 
 func (r *repository) GetUserBankAccounts(ctx context.Context, userID string) ([]*UserBankAccount, error) {
-	return nil, fmt.Errorf("not implemented")
+	query := `
+		SELECT uba.id, uba.user_id, uba.bank_id, uba.account_number, uba.account_name,
+			   uba.account_type, uba.sort_code, uba.status, uba.is_default, uba.is_verified,
+			   uba.usage_count, uba.last_used_at, uba.notes, uba.created_at, uba.updated_at,
+			   b.id as "bank.id", b.name as "bank.name", b.code as "bank.code",
+			   b.country_code as "bank.country_code", b.logo_url as "bank.logo_url"
+		FROM user_bank_accounts uba
+		JOIN banks b ON uba.bank_id = b.id
+		WHERE uba.user_id = $1 AND uba.deleted_at IS NULL
+		ORDER BY uba.is_default DESC, uba.created_at DESC`
+
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		r.logger.WithError(err).WithField("user_id", userID).Error("Failed to get user bank accounts")
+		return nil, fmt.Errorf("failed to get user bank accounts: %w", err)
+	}
+	defer rows.Close()
+
+	var accounts []*UserBankAccount
+	for rows.Next() {
+		var account UserBankAccount
+		var bank Bank
+
+		err := rows.Scan(
+			&account.ID, &account.UserID, &account.BankID, &account.AccountNumber, &account.AccountName,
+			&account.AccountType, &account.SortCode, &account.Status, &account.IsDefault, &account.IsVerified,
+			&account.UsageCount, &account.LastUsedAt, &account.Notes, &account.CreatedAt, &account.UpdatedAt,
+			&bank.ID, &bank.Name, &bank.Code, &bank.CountryCode, &bank.LogoURL,
+		)
+		if err != nil {
+			r.logger.WithError(err).Error("Failed to scan user bank account row")
+			return nil, fmt.Errorf("failed to scan bank account: %w", err)
+		}
+
+		account.Bank = &bank
+		accounts = append(accounts, &account)
+	}
+
+	if err = rows.Err(); err != nil {
+		r.logger.WithError(err).Error("Error iterating user bank account rows")
+		return nil, fmt.Errorf("error iterating bank accounts: %w", err)
+	}
+
+	return accounts, nil
 }
 
 func (r *repository) GetBankAccountByID(ctx context.Context, accountID string) (*UserBankAccount, error) {
@@ -524,7 +600,43 @@ func (r *repository) GetBankAccountByID(ctx context.Context, accountID string) (
 }
 
 func (r *repository) CreateBankAccount(ctx context.Context, account *UserBankAccount) error {
-	return fmt.Errorf("not implemented")
+	// 生成UUID
+	account.ID = uuid.New().String()
+
+	// 如果设置为默认，先将其他账户设为非默认
+	if account.IsDefault {
+		updateQuery := `
+			UPDATE user_bank_accounts 
+			SET is_default = false, updated_at = NOW() 
+			WHERE user_id = $1 AND deleted_at IS NULL`
+		_, err := r.db.ExecContext(ctx, updateQuery, account.UserID)
+		if err != nil {
+			r.logger.WithError(err).Error("Failed to update default bank accounts")
+			return fmt.Errorf("failed to update default accounts: %w", err)
+		}
+	}
+
+	query := `
+		INSERT INTO user_bank_accounts (
+			id, user_id, bank_id, account_number, account_name, account_type,
+			sort_code, status, is_default, is_verified, usage_count,
+			notes, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
+		)`
+
+	_, err := r.db.ExecContext(ctx, query,
+		account.ID, account.UserID, account.BankID, account.AccountNumber,
+		account.AccountName, account.AccountType, account.SortCode, account.Status,
+		account.IsDefault, account.IsVerified, account.UsageCount, account.Notes,
+	)
+
+	if err != nil {
+		r.logger.WithError(err).WithField("user_id", account.UserID).Error("Failed to create bank account")
+		return fmt.Errorf("failed to create bank account: %w", err)
+	}
+
+	return nil
 }
 
 func (r *repository) UpdateBankAccount(ctx context.Context, account *UserBankAccount) error {
