@@ -47,9 +47,11 @@ dist/
 .pub-cache/
 .pub/
 /build/
+*.lock
+pubspec.lock
 
 # Web related
-lib/generated_plugin_registrant.dart
+**/lib/generated_plugin_registrant.dart
 
 # Symbolication related
 app.*.symbols
@@ -61,6 +63,23 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# iOS related
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# macOS related
+**/macos/Pods/
+**/macos/.symlinks/
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/Flutter-Debug.xcconfig
+**/macos/Flutter/Flutter-Release.xcconfig
+**/macos/Runner/GeneratedPluginRegistrant.swift
 
 # Go binary
 server
