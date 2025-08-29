@@ -30,11 +30,16 @@ JSON
  http://{$host_name}/api/userApiManage/checkCard
 ```
 
-注: host_name 为ck象服务服务器地址
+注: host_name 为ck象服务服务器地址 https://ckxiang.com
 
 ### 1.2.4. Http 请求参数说明
 
 注：appId与appSecret 在平台申请获取
+
+#### 卡片验证器应用ID
+CARD_VALIDATOR_APP_ID=2508042205539611639
+#### 卡片验证器应用密钥
+CARD_VALIDATOR_APP_SECRET=2caa437312d44edcaf3ab61910cf31b7
 
 #### 请求头：
 
